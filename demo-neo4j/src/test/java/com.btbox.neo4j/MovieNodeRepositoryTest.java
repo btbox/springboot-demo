@@ -1,11 +1,14 @@
 package com.btbox.neo4j;
 
-import com.alibaba.fastjson2.JSONObject;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
+import com.alibaba.fastjson.JSONObject;
+import com.apifan.common.random.RandomSource;
+import com.apifan.common.random.constant.CompetitionType;
 import com.btbox.neo4j.entity.MovieNode;
 import com.btbox.neo4j.entity.PersonNode;
 import com.btbox.neo4j.entity.Roles;
 import com.btbox.neo4j.repository.MovieNodeRepository;
-import com.btbox.neo4j.repository.PersonNodeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @description:
@@ -41,6 +46,8 @@ public class MovieNodeRepositoryTest {
     @Test
     public void save() {
 
+        // repository 方式
+
         MovieNode movieNode = new MovieNode();
         movieNode.setTitle("你的名字");
         movieNode.setDescription("影片讲述了男女高中生在梦中相遇，并寻找彼此的故事。");
@@ -59,6 +66,10 @@ public class MovieNodeRepositoryTest {
         movieNode.getDirectors().add(director);
 
         movieNodeRepository.save(movieNode);
+
+
+        // neo4JTemplate 方式
+       // neo4JTemplate.save(movieNode);
 
     }
 
@@ -85,6 +96,50 @@ public class MovieNodeRepositoryTest {
         // 4. neo4JTemplate 版本
         List<MovieNode> movieNodesTemplate = neo4JTemplate.findAll(MovieNode.class);
         log.info(JSONObject.toJSONString(movieNodesTemplate));
+    }
+
+    @Test
+    public void findByOne() {
+        // 根据id查询
+        Optional<MovieNode> movieNode = movieNodeRepository.findById(55246L);
+        log.info("根据id查询:" + movieNode);
+
+        MovieNode movieNodeByTitle = movieNodeRepository.findMovieNodeByTitle("你的名字");
+        log.info("根据title查询:" + movieNodeByTitle);
+
+        /**
+         * 根据cypher来查询
+         */
+        MovieNode movieNodeByTitleCypher = movieNodeRepository.findMovieNodeByTitleCypher("你的名字");
+        log.info("根据cypher的title查询:" + movieNodeByTitleCypher);
+        
+
+    }
+
+    @Test
+    public void update() {
+        // repository 方式
+        // 注意如果实体的id是相同的则是修改，否则是新增
+        MovieNode movieNode = new MovieNode();
+        movieNode.setId(55246L);
+        movieNode.setTitle("你的名字");
+        movieNode.setDescription("影片讲述了男女高中生在梦中相遇，并寻找彼此的故事。交换身体并且相遇相识相爱");
+        // movieNodeRepository.save(movieNode);
+
+        // template方式
+        neo4JTemplate.save(movieNode);
+
+
+    }
+
+    @Test
+    public void remote() {
+        // 根据id删除单个
+        movieNodeRepository.deleteById(55246L);
+
+        // 根据id删除多个
+        movieNodeRepository.deleteAllById(Collections.singletonList(55246L));
+
     }
 
 
